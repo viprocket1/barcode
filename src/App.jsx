@@ -118,9 +118,9 @@ const BarcodePrinter = () => {
       flex flex-col p-[2mm] box-border relative
     `}>
       
-      {/* 1. TOP ROW: Store Left | Phone Right */}
-      <div className="flex justify-between items-baseline w-full h-[15%]">
-        <span className="font-bold text-[9px] uppercase tracking-wide leading-none">{data.storeName}</span>
+      {/* 1. TOP ROW: Store Left | Phone Right (Height: 12%) */}
+      <div className="flex justify-between items-baseline w-full h-[12%] border-b border-gray-300 pb-[1px]">
+        <span className="font-bold text-[8px] uppercase tracking-wide leading-none">{data.storeName}</span>
         {data.storePhone && (
           <span className="text-[7px] font-semibold text-gray-800 leading-none tracking-tight">
             {data.storePhone}
@@ -128,43 +128,44 @@ const BarcodePrinter = () => {
         )}
       </div>
 
-      {/* 2. PRODUCT NAME: Bold, takes remaining width */}
-      <div className="w-full h-[20%] mt-[1px]">
+      {/* 2. PRODUCT NAME (Height: 18%) */}
+      <div className="w-full h-[18%] mt-[1px]">
         <FitText textStr={data.productName} maxScale={1.1}>
-           <span className="font-black text-[12px] uppercase leading-none font-oswald">{data.productName}</span>
+           <span className="font-black text-[11px] uppercase leading-none font-oswald">{data.productName}</span>
         </FitText>
       </div>
 
-      {/* 3. BARCODE: Fills the middle void naturally */}
-      <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+      {/* 3. BARCODE (Height: 48% - Increased Space) */}
+      <div className="h-[48%] w-full flex items-center justify-center overflow-hidden">
          <div className="w-full h-full flex items-center justify-center">
            <Barcode 
              value={data.sku}
-             width={1.3}         /* Slightly wider bars for easier scanning */
-             height={28}         /* Good height relative to label */
+             width={1.3}         
+             height={18}         /* Reduced bar height to make room for numbers */
              fontSize={10}       /* Readable numbers */
              fontOptions="bold"
-             margin={0}
+             marginTop={0}       /* Critical: Removes top whitespace */
+             marginBottom={0}    /* Critical: Removes bottom whitespace */
              displayValue={true}
              background="transparent"
              lineColor="#000"
-             textMargin={1}
+             textMargin={1}      /* Gap between bars and numbers */
            />
          </div>
       </div>
 
-      {/* 4. BOTTOM ROW: MRP (Small Left) | PRICE (Huge Right) */}
-      <div className="w-full h-[22%] flex items-end justify-between mt-[1px]">
-        <div className="flex flex-col leading-none pb-[1px]">
+      {/* 4. BOTTOM ROW: MRP | PRICE (Height: 22%) */}
+      <div className="w-full h-[22%] flex items-end justify-between mt-[1px] border-t border-gray-300 pt-[1px]">
+        <div className="flex flex-col leading-none">
           <span className="text-[6px] font-bold text-gray-500 uppercase">MRP</span>
-          <span className="text-[10px] font-bold text-gray-400 line-through decoration-[1.5px] decoration-gray-800">
+          <span className="text-[9px] font-bold text-gray-400 line-through decoration-[1px] decoration-gray-800">
             {data.mrp}
           </span>
         </div>
         
         <div className="flex items-baseline gap-[1px] leading-none">
-          <span className="text-[10px] font-bold mr-[1px]">₹</span>
-          <span className="text-[20px] font-black font-oswald tracking-tight leading-[0.8]">
+          <span className="text-[9px] font-bold mr-[1px]">₹</span>
+          <span className="text-[18px] font-black font-oswald tracking-tight leading-[0.85]">
             {data.price}
           </span>
         </div>
@@ -182,15 +183,17 @@ const BarcodePrinter = () => {
           <Printer size={28} className="text-slate-700" /> 
           Smart Label Printer
         </h2>
-        <p className="text-sm text-slate-500 mt-1">50mm x 25mm (Clean Layout)</p>
+        <p className="text-sm text-slate-500 mt-1">50mm x 25mm (Fixed Layout)</p>
       </div>
 
       {/* PREVIEW */}
       <div className="no-print flex flex-col items-center gap-4 mb-8">
          <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Preview</div>
-         {/* Render Preview with borders to simulate label edges */}
          <div className="border border-gray-300 shadow-xl bg-white">
             <SingleLabel isPreview={true} />
+         </div>
+         <div className="text-xs text-slate-400">
+           Numbers under barcode should now be fully visible
          </div>
       </div>
 
@@ -309,7 +312,7 @@ const BarcodePrinter = () => {
                   <a href="https://wa.me/919309555464" target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-green-600 hover:underline text-[10px] font-bold uppercase"
                   >
-                    <MessageCircle size={12} /> Support:+91 9309555464
+                    <MessageCircle size={12} /> Support: 9309555464
                   </a>
                </div>
             </div>
