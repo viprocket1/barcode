@@ -4,7 +4,7 @@ import { Printer, Copy, Settings, Type, MessageCircle, Shuffle, Phone } from 'lu
 
 /**
  * CUSTOM COMPONENT: FitText
- * Automatically scales text to fit its container.
+ * Automatically scales text to fit its container without overflowing.
  */
 const FitText = ({ children, className = "", maxScale = 1.5, textStr = "" }) => {
   const containerRef = useRef(null);
@@ -35,8 +35,8 @@ const FitText = ({ children, className = "", maxScale = 1.5, textStr = "" }) => 
   }, [children, maxScale, textStr]);
 
   return (
-    <div ref={containerRef} className={`w-full h-full flex items-center justify-center overflow-hidden ${className}`}>
-      <div ref={textRef} style={{ transformOrigin: 'center center', whiteSpace: 'nowrap' }}>
+    <div ref={containerRef} className={`w-full h-full flex items-center ${className}`}>
+      <div ref={textRef} style={{ transformOrigin: 'left center', whiteSpace: 'nowrap' }}>
         {children}
       </div>
     </div>
@@ -44,15 +44,12 @@ const FitText = ({ children, className = "", maxScale = 1.5, textStr = "" }) => 
 };
 
 const BarcodePrinter = () => {
-  // Standard TSC TTP 244 Label Size: 50mm x 25mm
-  const [settings] = useState({
-    widthMm: 50,
-    heightMm: 25,
-  });
+  // Label Size: 50mm x 25mm
+  const [settings] = useState({ widthMm: 50, heightMm: 25 });
 
   const [data, setData] = useState({
     storeName: 'SUPER MART',
-    storePhone: '9876543210', // Default store contact
+    storePhone: '9876543210',
     productName: 'Jeera Rice Premium (1kg)',
     mrp: 140,
     price: 125,
@@ -61,7 +58,7 @@ const BarcodePrinter = () => {
 
   const [printCount, setPrintCount] = useState(1);
 
-  // --- Dummy Data Generator ---
+  // --- Dummy Data ---
   const dummyProducts = [
     { name: 'Maggi Noodles 140g', mrp: 14, price: 12, sku: '8901058000456' },
     { name: 'Lux Soap Bar 100g', mrp: 35, price: 32, sku: '8901030824089' },
@@ -75,7 +72,6 @@ const BarcodePrinter = () => {
     const randomItem = dummyProducts[Math.floor(Math.random() * dummyProducts.length)];
     const randomSuffix = Math.floor(100 + Math.random() * 900);
     const newSku = randomItem.sku.substring(0, 10) + randomSuffix;
-
     setData(prev => ({
       ...prev,
       productName: randomItem.name,
@@ -86,43 +82,28 @@ const BarcodePrinter = () => {
   };
 
   const styles = `
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Inconsolata:wght@700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Oswald:wght@500;700&display=swap');
     
-    .font-mono-num { font-family: 'Inconsolata', monospace; }
+    .font-oswald { font-family: 'Oswald', sans-serif; }
 
-    /* Screen Preview Styles */
     .preview-container {
       width: ${settings.widthMm}mm;
       height: ${settings.heightMm}mm;
       background: white;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    /* PRINT MEDIA QUERY */
     @media print {
-      @page {
-        size: ${settings.widthMm}mm ${settings.heightMm}mm;
-        margin: 0;
-      }
-      html, body { 
-        margin: 0 !important; 
-        padding: 0 !important;
-        background: white; 
-      }
+      @page { size: ${settings.widthMm}mm ${settings.heightMm}mm; margin: 0; }
+      html, body { margin: 0 !important; padding: 0 !important; background: white; }
       body * { visibility: hidden; }
       .print-area, .print-area * { visibility: visible; }
-      .print-area {
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
+      .print-area { position: absolute; top: 0; left: 0; }
       .label-page {
         width: ${settings.widthMm}mm;
         height: ${settings.heightMm}mm;
         page-break-after: always;
         overflow: hidden;
-        display: flex;
-        flex-direction: column;
         background: white;
         color: black;
       }
@@ -130,54 +111,62 @@ const BarcodePrinter = () => {
     }
   `;
 
+  // === DESIGN: Minimalist Smart Layout ===
   const SingleLabel = ({ isPreview = false }) => (
     <div className={`
       ${isPreview ? 'preview-container' : 'label-page'} 
-      relative flex flex-col items-center justify-between p-[1.5mm] box-border border-0
+      flex flex-col p-[2mm] box-border relative
     `}>
-      {/* 1. Header: Store Name & Phone */}
-      <div className="w-full h-[18%] border-b border-black flex flex-col items-center justify-center leading-none pb-[1px]">
-        <span className="font-bold text-[8px] uppercase tracking-wider">{data.storeName}</span>
+      
+      {/* 1. TOP ROW: Store Left | Phone Right */}
+      <div className="flex justify-between items-baseline w-full h-[15%]">
+        <span className="font-bold text-[9px] uppercase tracking-wide leading-none">{data.storeName}</span>
         {data.storePhone && (
-          <span className="text-[6px] font-bold mt-[1px]">Ph: {data.storePhone}</span>
+          <span className="text-[7px] font-semibold text-gray-800 leading-none tracking-tight">
+            {data.storePhone}
+          </span>
         )}
       </div>
 
-      {/* 2. Product Name */}
-      <div className="w-full h-[18%] mt-[1px]">
-        <FitText textStr={data.productName} maxScale={1}>
-           <span className="font-bold uppercase text-[10px]">{data.productName}</span>
+      {/* 2. PRODUCT NAME: Bold, takes remaining width */}
+      <div className="w-full h-[20%] mt-[1px]">
+        <FitText textStr={data.productName} maxScale={1.1}>
+           <span className="font-black text-[12px] uppercase leading-none font-oswald">{data.productName}</span>
         </FitText>
       </div>
 
-      {/* 3. Barcode Area - Tuned for human readability */}
-      <div className="flex-1 w-full flex items-center justify-center overflow-hidden -mt-[1px]">
-         <div className="w-full h-full flex items-center justify-center transform scale-y-105">
+      {/* 3. BARCODE: Fills the middle void naturally */}
+      <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+         <div className="w-full h-full flex items-center justify-center">
            <Barcode 
              value={data.sku}
-             width={1.2}        
-             height={25}        
-             fontSize={9}        /* Increased font size for readability */
-             fontOptions="bold"  /* Bold text for easier reading */
+             width={1.3}         /* Slightly wider bars for easier scanning */
+             height={28}         /* Good height relative to label */
+             fontSize={10}       /* Readable numbers */
+             fontOptions="bold"
              margin={0}
-             displayValue={true} /* Ensures number is printed */
+             displayValue={true}
              background="transparent"
-             lineColor="#000000"
-             textMargin={0}
+             lineColor="#000"
+             textMargin={1}
            />
          </div>
       </div>
 
-      {/* 4. Footer: Price Info */}
-      <div className="w-full h-[24%] flex items-center justify-between border-t border-black pt-[1px]">
-        <div className="flex flex-col items-start leading-none">
-          <span className="text-[6px] font-bold text-gray-600">MRP</span>
-          <span className="text-[10px] line-through font-mono-num decoration-[1px]">₹{data.mrp}</span>
+      {/* 4. BOTTOM ROW: MRP (Small Left) | PRICE (Huge Right) */}
+      <div className="w-full h-[22%] flex items-end justify-between mt-[1px]">
+        <div className="flex flex-col leading-none pb-[1px]">
+          <span className="text-[6px] font-bold text-gray-500 uppercase">MRP</span>
+          <span className="text-[10px] font-bold text-gray-400 line-through decoration-[1.5px] decoration-gray-800">
+            {data.mrp}
+          </span>
         </div>
         
-        <div className="flex flex-col items-end leading-none">
-          <span className="text-[6px] font-bold">OUR PRICE</span>
-          <span className="text-[14px] font-black font-mono-num">₹{data.price}</span>
+        <div className="flex items-baseline gap-[1px] leading-none">
+          <span className="text-[10px] font-bold mr-[1px]">₹</span>
+          <span className="text-[20px] font-black font-oswald tracking-tight leading-[0.8]">
+            {data.price}
+          </span>
         </div>
       </div>
     </div>
@@ -191,21 +180,17 @@ const BarcodePrinter = () => {
       <div className="no-print mb-8 text-center">
         <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
           <Printer size={28} className="text-slate-700" /> 
-          TTP 244 Barcode Generator
+          Smart Label Printer
         </h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Optimized for 50mm x 25mm Thermal Labels
-        </p>
+        <p className="text-sm text-slate-500 mt-1">50mm x 25mm (Clean Layout)</p>
       </div>
 
       {/* PREVIEW */}
       <div className="no-print flex flex-col items-center gap-4 mb-8">
-         <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Live Preview</div>
-         <div className="border border-slate-300 shadow-xl bg-white">
+         <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Preview</div>
+         {/* Render Preview with borders to simulate label edges */}
+         <div className="border border-gray-300 shadow-xl bg-white">
             <SingleLabel isPreview={true} />
-         </div>
-         <div className="text-xs text-slate-400">
-           Check "Ph:" and barcode number visibility
          </div>
       </div>
 
@@ -218,15 +203,14 @@ const BarcodePrinter = () => {
 
       {/* CONTROLS */}
       <div className="no-print w-full max-w-3xl bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-         
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            {/* Left Column: Product Data */}
+            {/* INPUTS */}
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2 border-b pb-2">
                  <div className="flex items-center gap-2">
                     <Type size={18} className="text-slate-400" />
-                    <span className="font-bold text-sm text-slate-600">Product Details</span>
+                    <span className="font-bold text-sm text-slate-600">Details</span>
                  </div>
                  <button 
                    onClick={handleRandomProduct}
@@ -237,115 +221,95 @@ const BarcodePrinter = () => {
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Product Name</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Product Name</label>
                 <input 
-                  type="text" 
-                  value={data.productName}
+                  type="text" value={data.productName}
                   onChange={(e) => setData({...data, productName: e.target.value})}
-                  className="w-full border border-slate-300 rounded p-2 text-sm font-semibold"
+                  className="w-full border rounded p-2 text-sm font-semibold"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Barcode / SKU</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Barcode</label>
                 <input 
-                  type="text" 
-                  value={data.sku}
+                  type="text" value={data.sku}
                   onChange={(e) => setData({...data, sku: e.target.value})}
-                  className="w-full border border-slate-300 rounded p-2 text-sm font-mono tracking-wide"
+                  className="w-full border rounded p-2 text-sm font-mono"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">MRP</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">MRP</label>
                     <input 
-                      type="number" 
-                      value={data.mrp}
+                      type="number" value={data.mrp}
                       onChange={(e) => setData({...data, mrp: e.target.value})}
-                      className="w-full border border-slate-300 rounded p-2 text-sm"
+                      className="w-full border rounded p-2 text-sm"
                     />
                  </div>
                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Our Price</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Sell Price</label>
                     <input 
-                      type="number" 
-                      value={data.price}
+                      type="number" value={data.price}
                       onChange={(e) => setData({...data, price: e.target.value})}
-                      className="w-full border-2 border-slate-700 rounded p-2 text-sm font-bold"
+                      className="w-full border-2 border-slate-800 rounded p-2 text-sm font-bold"
                     />
                  </div>
               </div>
             </div>
 
-            {/* Right Column: Settings */}
+            {/* SETTINGS */}
             <div className="space-y-4 flex flex-col h-full">
                <div className="flex items-center gap-2 mb-2 border-b pb-2">
                  <Settings size={18} className="text-slate-400" />
-                 <span className="font-bold text-sm text-slate-600">Label Settings</span>
+                 <span className="font-bold text-sm text-slate-600">Store</span>
                </div>
 
-               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Store Name</label>
-                <input 
-                  type="text" 
-                  value={data.storeName}
-                  onChange={(e) => setData({...data, storeName: e.target.value})}
-                  className="w-full border border-slate-300 rounded p-2 text-sm"
-                />
+               <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Store Name</label>
+                  <input 
+                    type="text" value={data.storeName}
+                    onChange={(e) => setData({...data, storeName: e.target.value})}
+                    className="w-full border rounded p-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Phone</label>
+                  <input 
+                    type="text" value={data.storePhone}
+                    onChange={(e) => setData({...data, storePhone: e.target.value})}
+                    className="w-full border rounded p-2 text-sm"
+                  />
+                </div>
                </div>
 
-               {/* NEW: Store Phone Input */}
-               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                    <Phone size={12} /> Store Phone
-                </label>
-                <input 
-                  type="text" 
-                  value={data.storePhone}
-                  onChange={(e) => setData({...data, storePhone: e.target.value})}
-                  placeholder="For label (e.g., 9876543210)"
-                  className="w-full border border-slate-300 rounded p-2 text-sm"
-                />
-               </div>
-
-               <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mt-auto">
-                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
-                   <Copy size={14} /> Copies to Print
-                 </label>
-                 <div className="flex items-center gap-4">
-                   <input 
-                      type="range" 
-                      min="1" 
-                      max="50" 
-                      value={printCount}
-                      onChange={(e) => setPrintCount(Number(e.target.value))}
-                      className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                   />
-                   <span className="text-2xl font-black text-slate-700 w-12 text-center">{printCount}</span>
+               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mt-auto">
+                 <div className="flex items-center justify-between mb-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                      <Copy size={12} /> Copies
+                    </label>
+                    <span className="text-xl font-black text-slate-700">{printCount}</span>
                  </div>
+                 <input 
+                    type="range" min="1" max="50" value={printCount}
+                    onChange={(e) => setPrintCount(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                 />
                </div>
 
-               <div className="pt-2">
-                 <button 
-                   onClick={() => window.print()}
-                   className="w-full bg-slate-900 hover:bg-black text-white py-3 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
-                 >
-                   <Printer size={20} /> PRINT LABELS
-                 </button>
-               </div>
+               <button 
+                 onClick={() => window.print()}
+                 className="w-full bg-black text-white py-3 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-slate-800 transition"
+               >
+                 <Printer size={20} /> PRINT
+               </button>
 
-               <div className="pt-4 mt-2 border-t border-slate-100">
-                  <a 
-                    href="https://wa.me/919309555464" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 p-2 rounded-lg transition-colors group"
+               <div className="pt-2 border-t border-slate-100 text-center">
+                  <a href="https://wa.me/919309555464" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-green-600 hover:underline text-[10px] font-bold uppercase"
                   >
-                    <MessageCircle size={18} />
-                    <span className="text-xs font-bold uppercase tracking-wide">
-                      Software Support: <span className="group-hover:underline">+91 9309555464</span>
-                    </span>
+                    <MessageCircle size={12} /> Support:+91 9309555464
                   </a>
                </div>
             </div>
