@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Barcode from 'react-barcode';
-import { Printer, Copy, Settings, Type, MessageCircle } from 'lucide-react';
+import { Printer, Copy, Settings, Type, MessageCircle, Shuffle } from 'lucide-react';
 
 /**
  * CUSTOM COMPONENT: FitText
@@ -60,7 +60,36 @@ const BarcodePrinter = () => {
 
   const [printCount, setPrintCount] = useState(1);
 
-  // CSS for Thermal Printing
+  // --- NEW: Dummy Data Generator ---
+  const dummyProducts = [
+    { name: 'Maggi Noodles 140g', mrp: 14, price: 12, sku: '8901058000456' },
+    { name: 'Lux Soap Bar 100g', mrp: 35, price: 32, sku: '8901030824089' },
+    { name: 'Tata Salt 1kg Pack', mrp: 28, price: 25, sku: '8904043901019' },
+    { name: 'Amul Butter 100g', mrp: 58, price: 55, sku: '8901262010025' },
+    { name: 'Coca Cola 750ml Bottle', mrp: 40, price: 38, sku: '5449000000996' },
+    { name: 'Surf Excel Easy Wash', mrp: 110, price: 99, sku: '8901030542150' },
+    { name: 'Britannia Good Day', mrp: 30, price: 25, sku: '8901063010023' },
+    { name: 'Colgate Strong Teeth', mrp: 95, price: 88, sku: '8901314010522' },
+    { name: 'Dabur Red Paste 200g', mrp: 115, price: 105, sku: '8901207033783' },
+    { name: 'Fortune Oil 1L Pouch', mrp: 165, price: 145, sku: '8906007280036' }
+  ];
+
+  const handleRandomProduct = () => {
+    const randomItem = dummyProducts[Math.floor(Math.random() * dummyProducts.length)];
+    // Generate a random last 3 digits for SKU to ensure barcodes look different even for same products
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const newSku = randomItem.sku.substring(0, 10) + randomSuffix;
+
+    setData(prev => ({
+      ...prev,
+      productName: randomItem.name,
+      mrp: randomItem.mrp,
+      price: randomItem.price,
+      sku: newSku
+    }));
+  };
+  // ---------------------------------
+
   const styles = `
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Inconsolata:wght@700&display=swap');
     
@@ -74,7 +103,7 @@ const BarcodePrinter = () => {
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
-    /* PRINT MEDIA QUERY - CRITICAL FOR TTP 244 */
+    /* PRINT MEDIA QUERY */
     @media print {
       @page {
         size: ${settings.widthMm}mm ${settings.heightMm}mm;
@@ -95,7 +124,7 @@ const BarcodePrinter = () => {
       .label-page {
         width: ${settings.widthMm}mm;
         height: ${settings.heightMm}mm;
-        page-break-after: always; /* Forces printer to cut/feed next label */
+        page-break-after: always;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -106,25 +135,21 @@ const BarcodePrinter = () => {
     }
   `;
 
-  // Internal Component for rendering a single label
   const SingleLabel = ({ isPreview = false }) => (
     <div className={`
       ${isPreview ? 'preview-container' : 'label-page'} 
       relative flex flex-col items-center justify-between p-[2mm] box-border border-0
     `}>
-      {/* 1. Header: Store Name */}
       <div className="w-full h-[15%] text-center border-b border-black flex items-center justify-center">
         <span className="font-bold text-[8px] uppercase tracking-widest">{data.storeName}</span>
       </div>
 
-      {/* 2. Product Name */}
       <div className="w-full h-[20%] mt-[1mm]">
         <FitText textStr={data.productName} maxScale={1}>
            <span className="font-bold uppercase text-[12px]">{data.productName}</span>
         </FitText>
       </div>
 
-      {/* 3. Barcode Area */}
       <div className="flex-1 w-full flex items-center justify-center overflow-hidden my-[1mm]">
          <div className="w-full h-full flex items-center justify-center transform scale-y-110">
            <Barcode 
@@ -140,7 +165,6 @@ const BarcodePrinter = () => {
          </div>
       </div>
 
-      {/* 4. Footer: Price Info */}
       <div className="w-full h-[25%] flex items-center justify-between border-t border-black pt-[1mm]">
         <div className="flex flex-col items-start leading-none">
           <span className="text-[6px] font-bold text-gray-600">MRP</span>
@@ -195,9 +219,20 @@ const BarcodePrinter = () => {
             
             {/* Left Column: Product Data */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-2 border-b pb-2">
-                 <Type size={18} className="text-slate-400" />
-                 <span className="font-bold text-sm text-slate-600">Product Details</span>
+              <div className="flex items-center justify-between mb-2 border-b pb-2">
+                 <div className="flex items-center gap-2">
+                    <Type size={18} className="text-slate-400" />
+                    <span className="font-bold text-sm text-slate-600">Product Details</span>
+                 </div>
+                 {/* RANDOM GENERATOR BUTTON */}
+                 <button 
+                   onClick={handleRandomProduct}
+                   className="text-xs flex items-center gap-1 bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 px-2 py-1 rounded transition-colors"
+                   title="Fill with random product"
+                 >
+                   <Shuffle size={12} />
+                   Random
+                 </button>
               </div>
               
               <div>
@@ -285,7 +320,7 @@ const BarcodePrinter = () => {
                  </button>
                </div>
 
-               {/* SOFTWARE SUPPORT FOOTER */}
+               {/* SUPPORT FOOTER */}
                <div className="pt-4 mt-2 border-t border-slate-100">
                   <a 
                     href="https://wa.me/919309555464" 
