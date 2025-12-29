@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Barcode from 'react-barcode';
-import { Printer, RotateCcw, Copy, Settings, Type } from 'lucide-react';
+import { Printer, Copy, Settings, Type, MessageCircle } from 'lucide-react';
 
 /**
- * CUSTOM COMPONENT: FitText (Reused for consistent behavior)
- * Scales text to fit the tiny constraints of a barcode label.
+ * CUSTOM COMPONENT: FitText
+ * Automatically scales text to fit its container.
  */
 const FitText = ({ children, className = "", maxScale = 1.5, textStr = "" }) => {
   const containerRef = useRef(null);
@@ -32,7 +32,6 @@ const FitText = ({ children, className = "", maxScale = 1.5, textStr = "" }) => 
     };
 
     resize();
-    // Re-trigger resize if the text string changes specifically
   }, [children, maxScale, textStr]);
 
   return (
@@ -45,12 +44,10 @@ const FitText = ({ children, className = "", maxScale = 1.5, textStr = "" }) => 
 };
 
 const BarcodePrinter = () => {
-  // Standard TSC TTP 244 Label Size: 50mm x 25mm (2-inch x 1-inch)
-  const [settings, setSettings] = useState({
+  // Standard TSC TTP 244 Label Size: 50mm x 25mm
+  const [settings] = useState({
     widthMm: 50,
     heightMm: 25,
-    gapMm: 2,
-    printDensity: 'high' // For thermal bolding
   });
 
   const [data, setData] = useState({
@@ -59,7 +56,6 @@ const BarcodePrinter = () => {
     mrp: 140,
     price: 125,
     sku: '8901234567890',
-    packedDate: new Date().toISOString().split('T')[0]
   });
 
   const [printCount, setPrintCount] = useState(1);
@@ -106,11 +102,11 @@ const BarcodePrinter = () => {
         background: white;
         color: black;
       }
-      /* Remove browser headers/footers in settings, but this helps hide traces */
       .no-print { display: none !important; }
     }
   `;
 
+  // Internal Component for rendering a single label
   const SingleLabel = ({ isPreview = false }) => (
     <div className={`
       ${isPreview ? 'preview-container' : 'label-page'} 
@@ -131,12 +127,11 @@ const BarcodePrinter = () => {
       {/* 3. Barcode Area */}
       <div className="flex-1 w-full flex items-center justify-center overflow-hidden my-[1mm]">
          <div className="w-full h-full flex items-center justify-center transform scale-y-110">
-           {/* React-Barcode handles the SVG generation */}
            <Barcode 
              value={data.sku}
-             width={1.2}        // Width of single bar
-             height={30}        // Height of bars
-             fontSize={8}       // Text under barcode
+             width={1.2}        
+             height={30}        
+             fontSize={8}       
              margin={0}
              displayValue={true}
              background="transparent"
@@ -178,7 +173,6 @@ const BarcodePrinter = () => {
       {/* PREVIEW SECTION */}
       <div className="no-print flex flex-col items-center gap-4 mb-8">
          <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Live Preview (100% Zoom)</div>
-         {/* We wrap the preview in a border to show the label edges clearly on screen */}
          <div className="border border-slate-300 shadow-xl bg-white">
             <SingleLabel isPreview={true} />
          </div>
@@ -187,9 +181,8 @@ const BarcodePrinter = () => {
          </div>
       </div>
 
-      {/* HIDDEN PRINT AREA (This is what actually gets printed) */}
+      {/* HIDDEN PRINT AREA */}
       <div className="print-area hidden">
-         {/* We generate an array of length `printCount` to create multiple pages */}
          {Array.from({ length: printCount }).map((_, index) => (
            <SingleLabel key={index} />
          ))}
@@ -290,6 +283,21 @@ const BarcodePrinter = () => {
                  >
                    <Printer size={20} /> PRINT LABELS
                  </button>
+               </div>
+
+               {/* SOFTWARE SUPPORT FOOTER */}
+               <div className="pt-4 mt-2 border-t border-slate-100">
+                  <a 
+                    href="https://wa.me/919309555464" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 p-2 rounded-lg transition-colors group"
+                  >
+                    <MessageCircle size={18} />
+                    <span className="text-xs font-bold uppercase tracking-wide">
+                      Software Support: <span className="group-hover:underline">+91 9309555464</span>
+                    </span>
+                  </a>
                </div>
             </div>
 
