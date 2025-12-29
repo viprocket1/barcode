@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Barcode from 'react-barcode';
-import { Printer, Copy, Settings, Type, MessageCircle, Shuffle } from 'lucide-react';
+import { Printer, Copy, Settings, Type, MessageCircle, Shuffle, Phone } from 'lucide-react';
 
 /**
  * CUSTOM COMPONENT: FitText
@@ -52,6 +52,7 @@ const BarcodePrinter = () => {
 
   const [data, setData] = useState({
     storeName: 'SUPER MART',
+    storePhone: '9876543210', // Default store contact
     productName: 'Jeera Rice Premium (1kg)',
     mrp: 140,
     price: 125,
@@ -60,23 +61,18 @@ const BarcodePrinter = () => {
 
   const [printCount, setPrintCount] = useState(1);
 
-  // --- NEW: Dummy Data Generator ---
+  // --- Dummy Data Generator ---
   const dummyProducts = [
     { name: 'Maggi Noodles 140g', mrp: 14, price: 12, sku: '8901058000456' },
     { name: 'Lux Soap Bar 100g', mrp: 35, price: 32, sku: '8901030824089' },
     { name: 'Tata Salt 1kg Pack', mrp: 28, price: 25, sku: '8904043901019' },
     { name: 'Amul Butter 100g', mrp: 58, price: 55, sku: '8901262010025' },
-    { name: 'Coca Cola 750ml Bottle', mrp: 40, price: 38, sku: '5449000000996' },
+    { name: 'Coca Cola 750ml', mrp: 40, price: 38, sku: '5449000000996' },
     { name: 'Surf Excel Easy Wash', mrp: 110, price: 99, sku: '8901030542150' },
-    { name: 'Britannia Good Day', mrp: 30, price: 25, sku: '8901063010023' },
-    { name: 'Colgate Strong Teeth', mrp: 95, price: 88, sku: '8901314010522' },
-    { name: 'Dabur Red Paste 200g', mrp: 115, price: 105, sku: '8901207033783' },
-    { name: 'Fortune Oil 1L Pouch', mrp: 165, price: 145, sku: '8906007280036' }
   ];
 
   const handleRandomProduct = () => {
     const randomItem = dummyProducts[Math.floor(Math.random() * dummyProducts.length)];
-    // Generate a random last 3 digits for SKU to ensure barcodes look different even for same products
     const randomSuffix = Math.floor(100 + Math.random() * 900);
     const newSku = randomItem.sku.substring(0, 10) + randomSuffix;
 
@@ -88,7 +84,6 @@ const BarcodePrinter = () => {
       sku: newSku
     }));
   };
-  // ---------------------------------
 
   const styles = `
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Inconsolata:wght@700&display=swap');
@@ -138,34 +133,43 @@ const BarcodePrinter = () => {
   const SingleLabel = ({ isPreview = false }) => (
     <div className={`
       ${isPreview ? 'preview-container' : 'label-page'} 
-      relative flex flex-col items-center justify-between p-[2mm] box-border border-0
+      relative flex flex-col items-center justify-between p-[1.5mm] box-border border-0
     `}>
-      <div className="w-full h-[15%] text-center border-b border-black flex items-center justify-center">
-        <span className="font-bold text-[8px] uppercase tracking-widest">{data.storeName}</span>
+      {/* 1. Header: Store Name & Phone */}
+      <div className="w-full h-[18%] border-b border-black flex flex-col items-center justify-center leading-none pb-[1px]">
+        <span className="font-bold text-[8px] uppercase tracking-wider">{data.storeName}</span>
+        {data.storePhone && (
+          <span className="text-[6px] font-bold mt-[1px]">Ph: {data.storePhone}</span>
+        )}
       </div>
 
-      <div className="w-full h-[20%] mt-[1mm]">
+      {/* 2. Product Name */}
+      <div className="w-full h-[18%] mt-[1px]">
         <FitText textStr={data.productName} maxScale={1}>
-           <span className="font-bold uppercase text-[12px]">{data.productName}</span>
+           <span className="font-bold uppercase text-[10px]">{data.productName}</span>
         </FitText>
       </div>
 
-      <div className="flex-1 w-full flex items-center justify-center overflow-hidden my-[1mm]">
-         <div className="w-full h-full flex items-center justify-center transform scale-y-110">
+      {/* 3. Barcode Area - Tuned for human readability */}
+      <div className="flex-1 w-full flex items-center justify-center overflow-hidden -mt-[1px]">
+         <div className="w-full h-full flex items-center justify-center transform scale-y-105">
            <Barcode 
              value={data.sku}
              width={1.2}        
-             height={30}        
-             fontSize={8}       
+             height={25}        
+             fontSize={9}        /* Increased font size for readability */
+             fontOptions="bold"  /* Bold text for easier reading */
              margin={0}
-             displayValue={true}
+             displayValue={true} /* Ensures number is printed */
              background="transparent"
              lineColor="#000000"
+             textMargin={0}
            />
          </div>
       </div>
 
-      <div className="w-full h-[25%] flex items-center justify-between border-t border-black pt-[1mm]">
+      {/* 4. Footer: Price Info */}
+      <div className="w-full h-[24%] flex items-center justify-between border-t border-black pt-[1px]">
         <div className="flex flex-col items-start leading-none">
           <span className="text-[6px] font-bold text-gray-600">MRP</span>
           <span className="text-[10px] line-through font-mono-num decoration-[1px]">₹{data.mrp}</span>
@@ -194,14 +198,14 @@ const BarcodePrinter = () => {
         </p>
       </div>
 
-      {/* PREVIEW SECTION */}
+      {/* PREVIEW */}
       <div className="no-print flex flex-col items-center gap-4 mb-8">
-         <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Live Preview (100% Zoom)</div>
+         <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Live Preview</div>
          <div className="border border-slate-300 shadow-xl bg-white">
             <SingleLabel isPreview={true} />
          </div>
          <div className="text-xs text-slate-400">
-           Tip: Ensure your printer settings match {settings.widthMm}mm x {settings.heightMm}mm
+           Check "Ph:" and barcode number visibility
          </div>
       </div>
 
@@ -224,14 +228,11 @@ const BarcodePrinter = () => {
                     <Type size={18} className="text-slate-400" />
                     <span className="font-bold text-sm text-slate-600">Product Details</span>
                  </div>
-                 {/* RANDOM GENERATOR BUTTON */}
                  <button 
                    onClick={handleRandomProduct}
                    className="text-xs flex items-center gap-1 bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 px-2 py-1 rounded transition-colors"
-                   title="Fill with random product"
                  >
-                   <Shuffle size={12} />
-                   Random
+                   <Shuffle size={12} /> Random
                  </button>
               </div>
               
@@ -277,11 +278,11 @@ const BarcodePrinter = () => {
               </div>
             </div>
 
-            {/* Right Column: Settings & Print */}
+            {/* Right Column: Settings */}
             <div className="space-y-4 flex flex-col h-full">
                <div className="flex items-center gap-2 mb-2 border-b pb-2">
                  <Settings size={18} className="text-slate-400" />
-                 <span className="font-bold text-sm text-slate-600">Settings</span>
+                 <span className="font-bold text-sm text-slate-600">Label Settings</span>
                </div>
 
                <div>
@@ -290,6 +291,20 @@ const BarcodePrinter = () => {
                   type="text" 
                   value={data.storeName}
                   onChange={(e) => setData({...data, storeName: e.target.value})}
+                  className="w-full border border-slate-300 rounded p-2 text-sm"
+                />
+               </div>
+
+               {/* NEW: Store Phone Input */}
+               <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                    <Phone size={12} /> Store Phone
+                </label>
+                <input 
+                  type="text" 
+                  value={data.storePhone}
+                  onChange={(e) => setData({...data, storePhone: e.target.value})}
+                  placeholder="For label (e.g., 9876543210)"
                   className="w-full border border-slate-300 rounded p-2 text-sm"
                 />
                </div>
@@ -320,7 +335,6 @@ const BarcodePrinter = () => {
                  </button>
                </div>
 
-               {/* SUPPORT FOOTER */}
                <div className="pt-4 mt-2 border-t border-slate-100">
                   <a 
                     href="https://wa.me/919309555464" 
